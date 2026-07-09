@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Cloudix Store</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <main class="app">
+    <section class="hero" id="hero">
+      <p class="pill">18+ mini app</p>
+      <h1>Cloudix Store</h1>
+      <p>Каталог жидкостей. Заказ подтверждается админом после проверки оплаты.</p>
+      <button id="ageBtn" class="primary">Мне есть 18+</button>
+    </section>
+
+    <section id="shop" class="hidden">
+      <div class="topbar">
+        <div>
+          <p class="pill">catalog</p>
+          <h2>Каталог</h2>
+        </div>
+        <button id="cartBtn" class="primary">Корзина <span id="cartCount">0</span></button>
+      </div>
+      <div id="rules" class="notice"></div>
+      <div id="catalog" class="catalog"></div>
+    </section>
+
+    <section id="cartScreen" class="hidden panel">
+      <div class="topbar">
+        <h2>Корзина</h2>
+        <button id="backBtn" class="ghost">Назад</button>
+      </div>
+      <div id="cartItems"></div>
+      <div class="total">Итого: <b id="total">0 zł</b></div>
+
+      <form id="orderForm" class="form">
+        <label>Имя <input name="name" required></label>
+        <label>Ник Telegram <input name="username" id="username" readonly></label>
+        <label>Телефон <input name="phone" required></label>
+        <label>Способ получения
+          <select name="delivery_type" id="delivery">
+            <option value="pickup">Самовывоз — Величка</option>
+            <option value="city_delivery">Доставка по городу — 15 zł</option>
+            <option value="other_city_delivery">Доставка по Польше — 20 zł</option>
+          </select>
+        </label>
+        <label>Город <input name="city" id="city" required value="Величка"></label>
+        <label>Адрес <input name="address"></label>
+        <label>Комментарий <textarea name="comment"></textarea></label>
+        <button class="primary" type="submit">Создать заказ</button>
+      </form>
+    </section>
+
+    <section id="payScreen" class="hidden panel">
+      <p class="pill">payment</p>
+      <h2>Оплата</h2>
+      <p id="paymentText" class="notice"></p>
+      <p>Номер заказа: <b id="orderId"></b></p>
+      <p>После оплаты отправь в чат бота фото скрина с подписью:</p>
+      <code id="payCommand"></code>
+      <button id="closeBtn" class="primary">Готово</button>
+    </section>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>
