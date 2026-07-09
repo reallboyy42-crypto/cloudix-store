@@ -20,7 +20,7 @@ from aiogram.types import (
     CallbackQuery,
 )
 
-from bot.db import (
+from db import (
     init_db,
     get_catalog,
     toggle_product,
@@ -41,7 +41,7 @@ ADMIN_ID = int(os.getenv("ADMIN_ID", "5255297864"))
 WEBAPP_URL = os.getenv("WEBAPP_URL", "http://localhost:8080").rstrip("/")
 
 if not BOT_TOKEN or BOT_TOKEN == "PASTE_NEW_TOKEN_HERE":
-    raise RuntimeError("Нет BOT_TOKEN. Вставь новый токен в .env или переменные хостинга.")
+    raise RuntimeError("Нет BOT_TOKEN. Вставь новый токен в переменные Render.")
 
 bot = Bot(BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp = Dispatcher()
@@ -105,7 +105,7 @@ async def admin(message: Message):
     if not is_admin(message.from_user.id):
         await message.answer("⛔ Нет доступа.")
         return
-    await message.answer("🛠 <b>Админ-панель</b>", reply_markup=admin_keyboard())
+    await message.answer("🛠 <b>Админ-панель Cloudix Store</b>", reply_markup=admin_keyboard())
 
 @dp.message(F.text == "📦 Мои заказы")
 async def my_orders(message: Message):
@@ -192,10 +192,10 @@ async def complete_cb(callback: CallbackQuery):
     await callback.answer()
 
 async def index(request):
-    return web.FileResponse(Path("webapp/index.html"))
+    return web.FileResponse(Path("index.html"))
 
 async def admin_page(request):
-    return web.FileResponse(Path("webapp/admin.html"))
+    return web.FileResponse(Path("admin.html"))
 
 async def api_catalog(request):
     admin = request.query.get("admin") == "1"
@@ -266,7 +266,7 @@ async def make_app():
     app = web.Application()
     app.router.add_get("/", index)
     app.router.add_get("/admin", admin_page)
-    app.router.add_static("/static", Path("webapp"))
+    app.router.add_static("/static", Path("."), show_index=False)
 
     app.router.add_get("/api/catalog", api_catalog)
     app.router.add_get("/api/settings", api_settings)

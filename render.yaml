@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: cloudix-store-miniapp
+    name: cloudix-store
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: python main.py
@@ -11,3 +11,5 @@ services:
         value: "5255297864"
       - key: WEBAPP_URL
         sync: false
+      - key: PYTHON_VERSION
+        value: "3.12.11"
