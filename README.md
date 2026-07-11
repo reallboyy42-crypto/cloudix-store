@@ -1,24 +1,16 @@
-# Cloudix Store
+# Cloudix Store — Neon Preview
 
-Telegram бот + Telegram Mini App магазин + админ-панель.
+Обновление:
+- /start: только приветствие и одна кнопка магазина.
+- Новый вход в Mini App: 18+ экран.
+- Пароль входа: WW12nBQ67op
+- Неоновый фиолетово-синий фон.
+- RU/PL переключение.
+- Категории: ЖИДКОСТИ / ОДНОРАЗКИ / ПОДЫ.
+- Жидкости: ELFLIQ, VOZOL PRIME, PUFFY 50, PUFFY 70.
 
-## Важно
-
-Эта версия специально сделана для Render, где все файлы лежат в корне репозитория.
-
-Переменные Render:
-
-BOT_TOKEN=новый токен
+Render variables:
+BOT_TOKEN
 ADMIN_ID=5255297864
 WEBAPP_URL=https://cloudix-store.onrender.com
 PYTHON_VERSION=3.12.11
-
-## Товары
-
-Elfliq — 45 zł — 50 mg:
-- blueberry
-- raspberry
-
-Vozol Prime — 50 zł — 50 mg:
-- blueberry sour raspberry
-- strawberry

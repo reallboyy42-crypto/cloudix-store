@@ -5,179 +5,66 @@ import aiosqlite
 DB_PATH = Path("shop.db")
 
 PRODUCTS = [
-    {
-        "category": "Жидкости",
-        "name": "Elfliq",
-        "price": 45,
-        "strength": "50 mg",
-        "description": "Elfliq. Продажа только 18+.",
-        "flavors": ["blueberry", "raspberry"],
-    },
-    {
-        "category": "Жидкости",
-        "name": "Vozol Prime",
-        "price": 50,
-        "strength": "50 mg",
-        "description": "Vozol Prime. Продажа только 18+.",
-        "flavors": ["blueberry sour raspberry", "strawberry"],
-    },
+    {"category":"Жидкости","name":"ELFLIQ","price":50,"strength":"50 mg/30 ml","description":"ELFLIQ — liquid line.","flavors":["blueberry","raspberry"]},
+    {"category":"Жидкости","name":"VOZOL PRIME","price":55,"strength":"50 mg/30 ml","description":"VOZOL PRIME — liquid line.","flavors":["blueberry sour raspberry","strawberry"]},
+    {"category":"Жидкости","name":"PUFFY","price":45,"strength":"50 mg/30 ml","description":"PUFFY 50 mg/30 ml.","flavors":["blueberry","strawberry"]},
+    {"category":"Жидкости","name":"PUFFY","price":60,"strength":"70 mg/30 ml","description":"PUFFY 70 mg/30 ml.","flavors":["blueberry","strawberry"]},
 ]
 
 async def init_db():
     async with aiosqlite.connect(DB_PATH) as db:
-        await db.execute("""
-        CREATE TABLE IF NOT EXISTS products (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            category TEXT,
-            name TEXT,
-            price INTEGER,
-            strength TEXT,
-            description TEXT,
-            enabled INTEGER DEFAULT 1
-        )
-        """)
-
-        await db.execute("""
-        CREATE TABLE IF NOT EXISTS flavors (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            product_id INTEGER,
-            name TEXT,
-            enabled INTEGER DEFAULT 1
-        )
-        """)
-
-        await db.execute("""
-        CREATE TABLE IF NOT EXISTS orders (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER,
-            username TEXT,
-            name TEXT,
-            phone TEXT,
-            city TEXT,
-            address TEXT,
-            delivery_type TEXT,
-            comment TEXT,
-            items_json TEXT,
-            total INTEGER,
-            status TEXT DEFAULT 'waiting_payment',
-            payment_screenshot TEXT DEFAULT '',
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-        """)
-
-        await db.execute("""
-        CREATE TABLE IF NOT EXISTS settings (
-            key TEXT PRIMARY KEY,
-            value TEXT
-        )
-        """)
-
+        await db.execute("""CREATE TABLE IF NOT EXISTS products (id INTEGER PRIMARY KEY AUTOINCREMENT, category TEXT, name TEXT, price INTEGER, strength TEXT, description TEXT, enabled INTEGER DEFAULT 1)""")
+        await db.execute("""CREATE TABLE IF NOT EXISTS flavors (id INTEGER PRIMARY KEY AUTOINCREMENT, product_id INTEGER, name TEXT, enabled INTEGER DEFAULT 1)""")
+        await db.execute("""CREATE TABLE IF NOT EXISTS orders (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, username TEXT, name TEXT, phone TEXT, city TEXT, address TEXT, delivery_type TEXT, comment TEXT, items_json TEXT, total INTEGER, status TEXT DEFAULT 'waiting_payment', payment_screenshot TEXT DEFAULT '', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)""")
+        await db.execute("""CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)""")
         count = (await (await db.execute("SELECT COUNT(*) FROM products")).fetchone())[0]
         if count == 0:
             for p in PRODUCTS:
-                cur = await db.execute(
-                    "INSERT INTO products(category,name,price,strength,description,enabled) VALUES(?,?,?,?,?,1)",
-                    (p["category"], p["name"], p["price"], p["strength"], p["description"])
-                )
+                cur = await db.execute("INSERT INTO products(category,name,price,strength,description,enabled) VALUES(?,?,?,?,?,1)", (p['category'],p['name'],p['price'],p['strength'],p['description']))
                 pid = cur.lastrowid
-                for flavor in p["flavors"]:
-                    await db.execute(
-                        "INSERT INTO flavors(product_id,name,enabled) VALUES(?,?,1)",
-                        (pid, flavor)
-                    )
-
-            await db.execute("INSERT OR REPLACE INTO settings(key,value) VALUES(?,?)", (
-                "payment_text",
-                "Оплата на карту / BLIK. После оплаты нажмите “Я оплатил” и прикрепите скрин. Заказ будет подтверждён после проверки админом."
-            ))
-            await db.execute("INSERT OR REPLACE INTO settings(key,value) VALUES(?,?)", (
-                "rules_text",
-                "Продажа только 18+. Оформляя заказ, пользователь подтверждает, что ему есть 18 лет. Заказ обрабатывается только после подтверждения оплаты админом. Админ может запросить подтверждение возраста."
-            ))
-
+                for flavor in p['flavors']:
+                    await db.execute("INSERT INTO flavors(product_id,name,enabled) VALUES(?,?,1)", (pid, flavor))
+        await db.execute("INSERT OR REPLACE INTO settings(key,value) VALUES(?,?)", ("payment_text", "Оплата на карту / BLIK. После оплаты нажмите “Я оплатил” и прикрепите скрин. Заказ будет подтверждён после проверки админом."))
+        await db.execute("INSERT OR REPLACE INTO settings(key,value) VALUES(?,?)", ("rules_text", "Входя в приложение, вы подтверждаете, что вам исполнилось 18 лет."))
         await db.commit()
 
 async def get_catalog(admin=False):
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row
-        if admin:
-            products = await db.execute_fetchall("SELECT * FROM products ORDER BY id")
-        else:
-            products = await db.execute_fetchall("SELECT * FROM products WHERE enabled=1 ORDER BY id")
-
-        result = []
+        products = await db.execute_fetchall("SELECT * FROM products ORDER BY id" if admin else "SELECT * FROM products WHERE enabled=1 ORDER BY id")
+        result=[]
         for p in products:
-            if admin:
-                flavors = await db.execute_fetchall("SELECT * FROM flavors WHERE product_id=? ORDER BY id", (p["id"],))
-            else:
-                flavors = await db.execute_fetchall("SELECT * FROM flavors WHERE product_id=? AND enabled=1 ORDER BY id", (p["id"],))
-            item = dict(p)
-            item["flavors"] = [dict(f) for f in flavors]
-            result.append(item)
+            flavors = await db.execute_fetchall("SELECT * FROM flavors WHERE product_id=? ORDER BY id" if admin else "SELECT * FROM flavors WHERE product_id=? AND enabled=1 ORDER BY id", (p['id'],))
+            item=dict(p); item['flavors']=[dict(f) for f in flavors]; result.append(item)
         return result
 
 async def toggle_product(product_id):
     async with aiosqlite.connect(DB_PATH) as db:
-        await db.execute("UPDATE products SET enabled = CASE enabled WHEN 1 THEN 0 ELSE 1 END WHERE id=?", (product_id,))
-        await db.commit()
-
+        await db.execute("UPDATE products SET enabled = CASE enabled WHEN 1 THEN 0 ELSE 1 END WHERE id=?", (product_id,)); await db.commit()
 async def toggle_flavor(flavor_id):
     async with aiosqlite.connect(DB_PATH) as db:
-        await db.execute("UPDATE flavors SET enabled = CASE enabled WHEN 1 THEN 0 ELSE 1 END WHERE id=?", (flavor_id,))
-        await db.commit()
-
+        await db.execute("UPDATE flavors SET enabled = CASE enabled WHEN 1 THEN 0 ELSE 1 END WHERE id=?", (flavor_id,)); await db.commit()
 async def update_price(product_id, price):
     async with aiosqlite.connect(DB_PATH) as db:
-        await db.execute("UPDATE products SET price=? WHERE id=?", (price, product_id))
-        await db.commit()
-
+        await db.execute("UPDATE products SET price=? WHERE id=?", (price, product_id)); await db.commit()
 async def create_order(data):
     async with aiosqlite.connect(DB_PATH) as db:
-        cur = await db.execute("""
-        INSERT INTO orders(user_id,username,name,phone,city,address,delivery_type,comment,items_json,total,status)
-        VALUES(?,?,?,?,?,?,?,?,?,?,?)
-        """, (
-            int(data["user_id"]),
-            data.get("username", ""),
-            data["name"],
-            data["phone"],
-            data["city"],
-            data.get("address", ""),
-            data["delivery_type"],
-            data.get("comment", ""),
-            json.dumps(data["items"], ensure_ascii=False),
-            int(data["total"]),
-            "waiting_payment"
-        ))
-        await db.commit()
-        return cur.lastrowid
-
+        cur=await db.execute("""INSERT INTO orders(user_id,username,name,phone,city,address,delivery_type,comment,items_json,total,status) VALUES(?,?,?,?,?,?,?,?,?,?,?)""", (int(data['user_id']),data.get('username',''),data['name'],data['phone'],data['city'],data.get('address',''),data['delivery_type'],data.get('comment',''),json.dumps(data['items'],ensure_ascii=False),int(data['total']),'waiting_payment'))
+        await db.commit(); return cur.lastrowid
 async def get_order(order_id):
     async with aiosqlite.connect(DB_PATH) as db:
-        db.row_factory = aiosqlite.Row
-        rows = await db.execute_fetchall("SELECT * FROM orders WHERE id=?", (order_id,))
-        return dict(rows[0]) if rows else None
-
+        db.row_factory=aiosqlite.Row; rows=await db.execute_fetchall("SELECT * FROM orders WHERE id=?", (order_id,)); return dict(rows[0]) if rows else None
 async def get_orders(user_id=None):
     async with aiosqlite.connect(DB_PATH) as db:
-        db.row_factory = aiosqlite.Row
-        if user_id:
-            rows = await db.execute_fetchall("SELECT * FROM orders WHERE user_id=? ORDER BY id DESC LIMIT 20", (user_id,))
-        else:
-            rows = await db.execute_fetchall("SELECT * FROM orders ORDER BY id DESC LIMIT 100")
+        db.row_factory=aiosqlite.Row
+        rows=await db.execute_fetchall("SELECT * FROM orders WHERE user_id=? ORDER BY id DESC LIMIT 20", (user_id,)) if user_id else await db.execute_fetchall("SELECT * FROM orders ORDER BY id DESC LIMIT 100")
         return [dict(r) for r in rows]
-
-async def update_order_status(order_id, status):
+async def update_order_status(order_id,status):
     async with aiosqlite.connect(DB_PATH) as db:
-        await db.execute("UPDATE orders SET status=? WHERE id=?", (status, order_id))
-        await db.commit()
-
-async def add_payment(order_id, file_id):
+        await db.execute("UPDATE orders SET status=? WHERE id=?", (status,order_id)); await db.commit()
+async def add_payment(order_id,file_id):
     async with aiosqlite.connect(DB_PATH) as db:
-        await db.execute("UPDATE orders SET payment_screenshot=?, status='waiting_confirm' WHERE id=?", (file_id, order_id))
-        await db.commit()
-
+        await db.execute("UPDATE orders SET payment_screenshot=?, status='waiting_confirm' WHERE id=?", (file_id,order_id)); await db.commit()
 async def get_setting(key):
     async with aiosqlite.connect(DB_PATH) as db:
-        rows = await db.execute_fetchall("SELECT value FROM settings WHERE key=?", (key,))
-        return rows[0][0] if rows else ""
+        rows=await db.execute_fetchall("SELECT value FROM settings WHERE key=?", (key,)); return rows[0][0] if rows else ""
